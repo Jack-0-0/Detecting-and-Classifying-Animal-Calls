@@ -14,7 +14,7 @@ from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D, Activation 
 from keras.layers import Reshape, Permute
 from keras.layers import BatchNormalization, TimeDistributed, Dense, Dropout
-from keras.layers import GRU, Bidirectional, GlobalAveragePooling2D
+from keras.layers import GRU, Bidirectiona
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras import optimizers
 from tensorflow.python.client import device_lib
@@ -23,11 +23,14 @@ from sklearn.metrics import roc_curve, auc
 
 def create_model(filters, gru_units, dense_neurons, dropout):
     """
-    Outputs a non sequntial keras model
-    filters = number of filters in each convolutional layer
-    gru_units = number of gru units in each recurrent layer
-    dense_neurons = number of neurons in the time distributed dense layers
-    dropout = dropout rate used throughout the model
+    # Arguments
+        filters: number of filters in the convolutional layers.
+        gru_units: number of gru units in the GRU layers.
+        dense_neurons: number of neurons in the dense layers.
+        dropout: neurons to drop out during training. Values of 0 to 1.
+
+    # Returns
+        Keras functional model which can then be compiled and fit.
     """
     inp = Input(shape=(259, 64, 1))
     c_1 = Conv2D(filters, (3,3), padding='same', activation='relu')(inp)
@@ -57,21 +60,39 @@ def create_model(filters, gru_units, dense_neurons, dropout):
 
 
 def save_folder(date_time):
+    """
+    # Arguments
+        date_time: Current time as per datetime.datetime.now()
+
+    # Returns
+        path to save model and related history and metrics.
+    """
     date_now = str(date_time.date())
     time_now = str(date_time.time())
     sf = "saved_models/model_" + date_now + "_" + time_now + "_" + os.path.basename(__file__).split('.')[0]
     return sf
 
 
-def create_save_folder(save_folder):  
+def create_save_folder(save_folder):
+    """
+    # Arguments
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        creates directory at save_folder location, if it does not exist already.
+    """ 
     if not os.path.isdir(save_folder):
         os.makedirs(save_folder)
 
         
 def save_model(save_folder):
     """
-    Output: Saves dictionary of model training history as a pickle file.
-    """
+    # Arguments
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        saves model and history.
+    """ 
     model.save(save_folder + '/savedmodel' + '.h5')
     with open(save_folder + '/history.pickle', 'wb') as f:
         pickle.dump(model_fit.history, f)
@@ -79,8 +100,13 @@ def save_model(save_folder):
 
 def plot_accuracy(model_fit, save_folder):
     """
-    Output: Plots and saves graph of accuracy at each epoch. 
-    """
+    # Arguments
+        model_fit: model after training.
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        saves plots of train vs validation accuracy at each training epoch.
+    """ 
     train_acc = model_fit.history['binary_accuracy']
     val_acc = model_fit.history['val_binary_accuracy']
     epoch_axis = np.arange(1, len(train_acc) + 1)
@@ -99,8 +125,13 @@ def plot_accuracy(model_fit, save_folder):
 
 def plot_loss(model_fit, save_folder):
     """
-    Output: Plots and saves graph of loss at each epoch. 
-    """
+    # Arguments
+        model_fit: model after training.
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        saves plots of train vs validation loss at each training epoch.
+    """ 
     train_loss = model_fit.history['loss']
     val_loss = model_fit.history['val_loss']
     epoch_axis = np.arange(1, len(train_loss) + 1)
@@ -119,9 +150,15 @@ def plot_loss(model_fit, save_folder):
 
 def plot_ROC(model, x_test, y_test, save_folder):
     """
-    Output: Plots and saves overall ROC graph
-    for the test set.
-    """
+    # Arguments
+        model: model after training.
+        x_test: inputs to the network for testing.
+        y_test: actual outputs for testing.
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        saves plots of ROC.
+    """ 
     predicted = model.predict(x_test).ravel()
     actual = y_test.ravel()
     fpr, tpr, thresholds = roc_curve(actual, predicted, pos_label=None)
@@ -141,9 +178,15 @@ def plot_ROC(model, x_test, y_test, save_folder):
 
 def plot_class_ROC(model, x_test, y_test, save_folder):
     """
-    Output: Plots and saves ROC graphs
-    for the test set per class.
-    """
+    # Arguments
+        model: model after training.
+        x_test: inputs to the network for testing.
+        y_test: actual outputs for testing.
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        saves plots of ROC per class.
+    """ 
     class_names = ['GIG', 'SQL', 'GRL', 'GRN', 'SQT', 'MOO', 'RUM', 'WHP']
     for i in range(len(class_names)):
         predicted = model.predict(x_test)[:,:,i].ravel()
@@ -164,13 +207,20 @@ def plot_class_ROC(model, x_test, y_test, save_folder):
 
 
 def save_arch(model, save_folder):
+    """
+    # Arguments
+        model: model after training.
+        save_folder: path for directory to save model and related history and metrics.
+
+    # Output
+        saves network architecture.
+    """
     with open(save_folder + '/architecture.txt','w') as f:
         model.summary(print_fn=lambda x: f.write(x + '\n'))
 
 
-os.environ["CUDA_VISIBLE_DEVICES"]="2" # select GPU
+os.environ["CUDA_VISIBLE_DEVICES"]="2"  # select GPU
 config = tf.ConfigProto()
-#config.gpu_options.per_process_gpu_memory_fraction = 0.75 # set use %
 tf.Session(config=config)
 
 # load train and validation datasets
