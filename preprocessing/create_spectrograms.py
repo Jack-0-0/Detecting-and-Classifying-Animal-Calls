@@ -4,12 +4,17 @@ import sys
 import os
 
 def save_spectrogram(filepath, start, stop, y, sr):
-    """
-    Input: .wav filepath, with start and stop time in seconds,
-            y audio time series, sr samples rate of audio time
+    """Save mel spectrogram, created from .wav file.
+    
+    # Arguments: 
+        filepath: file path of .wav audio file. 
+        start: start tie in seconds.
+        stop: stop time in seconds.
+        y: audio time series, sr samples rate of audio time
             series
-    Output: Save a numpy file of mel spectrogram array of 
-            dimension (n_mels, t)
+    # Output
+        Saves a numpy file of mel spectrogram array of 
+        dimension (n_mels, t)
     """
     S = librosa.feature.melspectrogram(y=y[sr*start:(sr*stop)],
                                        sr=sr, n_mels=64, fmax=sr/2) 
