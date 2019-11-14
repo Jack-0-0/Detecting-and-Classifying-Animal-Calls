@@ -41,13 +41,15 @@ def create_label_dataframe(label, begin_time, end_time, window_size, timesteps_p
                             sep='\t',
                             index_col='Selection')
     if 'Label' in labels_df.columns:
-        call_labels = ['GIG', 'SQL', 'GRL', 'GRN', 'SQT', 'MOO', 'RUM', 'WHP']
-        labels_df.Label = labels_df.Label.str[0:3]
-        labels_df = labels_df[labels_df['Label'].isin(call_labels)]  
-        labels_df['Begin Time(t)'] = ((labels_df['Begin Time (s)'] - begin_time) * timesteps_per_second).apply(np.floor)
-        labels_df['End Time(t)'] = ((labels_df['End Time (s)'] - begin_time) * timesteps_per_second).apply(np.ceil)
-        labels_df = labels_df[labels_df['Begin Time (s)'] >= begin_time]
-        labels_df = labels_df[labels_df['End Time (s)'] <= end_time] 
+	call_labels = ['GIG', 'SQL', 'GRL', 'GRN', 'SQT', 'MOO', 'RUM', 'WHP']
+	labels_df.Label = labels_df.Label.str[0:3]
+	labels_df = labels_df[labels_df['Label'].isin(call_labels)]
+	labels_df = labels_df[labels_df['Begin Time (s)'] <= end_time]
+	labels_df = labels_df[labels_df['End Time (s)'] >= begin_time]
+	labels_df.loc[labels_df['End Time (s)'] > end_time, 'End Time (s)'] = end_time
+	labels_df.loc[labels_df['Begin Time (s)'] < begin_time, 'Begin Time (s)'] = begin_time
+	labels_df['Begin Time(t)'] = ((labels_df['Begin Time (s)'] - begin_time) * timesteps_per_second).apply(np.floor)
+	labels_df['End Time(t)'] = ((labels_df['End Time (s)'] - begin_time) * timesteps_per_second).apply(np.ceil)
     return labels_df
 
 
@@ -119,6 +121,7 @@ paths = ['cc16_352a_converted/spectro/',
 
 timesteps = 259
 window_size = 6
+timesteps_per_second = timesteps / window_size
 
 for path in paths:
 	for f in os.listdir(path):
@@ -126,7 +129,6 @@ for path in paths:
 	        label = find_label(f, path)
 	        begin_time = int(f.split('_')[2].split('sto')[0])
 	        end_time = int(f.split('_')[2].split('sto')[1].split('s')[0])
-	        timesteps_per_second = timesteps / window_size
 	        df = create_label_dataframe(label,
 	                                    begin_time,
 	                                    end_time,
